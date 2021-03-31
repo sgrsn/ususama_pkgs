@@ -22,25 +22,75 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies, 
 either expressed or implied, of the FreeBSD Project.
 *******************************************************************************/
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <termios.h>
-#include <Eigen/Geometry>
-#include "mecanum_io/mecanum_serial.hpp"
+#include "mecanum_io/serial_io.hpp"
 
-int main()
+#define HEAD_BYTE   0x7E
+#define ESCAPE_BYTE 0x7D
+#define ESCAPE_MASK 0x20
+
+class IntSerial
 {
-  MecanumSerial mecanum("/dev/ttyACM0", 115200);
-  
-  Eigen::Vector2f v1(0, 0);
-  mecanum.setVelocity( v1, 100 );
-  usleep(1000000);
-  Eigen::Vector2f v2(0, 0);
-  mecanum.setVelocity( v2 );
+  private:
+  SerialIO serial_;
 
-  mecanum.close();
-  return 0;
-}
+  public:
+  IntSerial(){}
+  IntSerial(const char * device, uint32_t baud_rate)
+  {
+    serial_ = SerialIO(device, baud_rate);
+    if(!serial_.hasFileDescriptor())
+    {
+      printf("Error, check the device");
+    }
+  }
+
+  void writeCommand(uint8_t reg, int data)
+  {
+    uint8_t data_bytes[12] = {};
+    uint8_t index = 0;
+    uint8_t checksum = 0;
+    data_bytes[index++] = HEAD_BYTE;
+    data_bytes[index++] = reg;
+    for (uint8_t i = 0; i < 4; ++i)
+    {
+        uint8_t tmp = data >> (24 - i*8) & 0xFF;
+        if ( (tmp == ESCAPE_BYTE) || (tmp == HEAD_BYTE) )
+        {
+          data_bytes[index++] = ESCAPE_BYTE;
+          checksum += ESCAPE_BYTE;
+          data_bytes[index++] = tmp ^ ESCAPE_MASK;
+          checksum += tmp ^ ESCAPE_MASK;
+        }
+        else
+        {
+          data_bytes[index++] = tmp;
+          checksum += tmp;
+        }
+    }
+    data_bytes[index] = checksum;
+    serial_.writePort(data_bytes, index+1);
+  }
+
+  void forceCommand(uint8_t reg, uint8_t *command, uint8_t length)
+  {
+    uint8_t send_bytes[length+2] = {};
+    send_bytes[0] = 0x7E;
+    send_bytes[1] = reg;
+    for(int i = 0; i < length; i++)
+    {
+      send_bytes[i+2] = command[i];
+    }
+    serial_.writePort(send_bytes, length+1);
+  }
+
+  void close()
+  {
+    serial_.closePort();
+  }
+
+};

@@ -23,24 +23,40 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 *******************************************************************************/
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <termios.h>
 #include <Eigen/Geometry>
-#include "mecanum_io/mecanum_serial.hpp"
+#include "mecanum_io/int_serial.hpp"
 
-int main()
+#define VEL_X 0x00
+#define VEL_Y 0x01
+#define ANGULAR_VEL 0x02
+
+#define COMMAND_SLEEP_MICROSEC 1000
+
+class MecanumSerial
 {
-  MecanumSerial mecanum("/dev/ttyACM0", 115200);
-  
-  Eigen::Vector2f v1(0, 0);
-  mecanum.setVelocity( v1, 100 );
-  usleep(1000000);
-  Eigen::Vector2f v2(0, 0);
-  mecanum.setVelocity( v2 );
+  private:
+  IntSerial serial_;
 
-  mecanum.close();
-  return 0;
-}
+  public:
+  MecanumSerial(){}
+  MecanumSerial(const char * device, uint32_t baud_rate)
+  {
+    serial_ = IntSerial(device, baud_rate);
+  }
+
+  // velocity shoud be set unit of mm/sec
+  // angular_vel 10E-3rad/sec
+  void setVelocity(Eigen::Vector2f velocity, float angular_vel=0)
+  {
+    serial_.writeCommand( VEL_X, (int)velocity.x() );
+    usleep(COMMAND_SLEEP_MICROSEC);
+    serial_.writeCommand( VEL_Y, (int)velocity.y() );
+    usleep(COMMAND_SLEEP_MICROSEC);
+    serial_.writeCommand( ANGULAR_VEL, (int)angular_vel );
+    usleep(COMMAND_SLEEP_MICROSEC);
+  }
+  void close()
+  {
+    serial_.close();
+  }
+};
