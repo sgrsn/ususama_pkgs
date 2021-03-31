@@ -55,6 +55,23 @@ class MecanumSerial
     serial_.writeCommand( ANGULAR_VEL, (int)angular_vel );
     usleep(COMMAND_SLEEP_MICROSEC);
   }
+
+  void setVelocity(float vel_x, float vel_y, float angular_vel=0)
+  {
+    serial_.writeCommand( VEL_X, (int)vel_x );
+    usleep(COMMAND_SLEEP_MICROSEC);
+    serial_.writeCommand( VEL_Y, (int)vel_y );
+    usleep(COMMAND_SLEEP_MICROSEC);
+    serial_.writeCommand( ANGULAR_VEL, (int)angular_vel );
+    usleep(COMMAND_SLEEP_MICROSEC);
+  }
+
+  void stopMotors()
+  {
+    Eigen::Vector2f vel(0, 0);
+    setVelocity( vel, (float)0.0 );
+  }
+
   void close()
   {
     serial_.close();

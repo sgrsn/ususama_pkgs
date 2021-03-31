@@ -21,6 +21,8 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_executable(mecanum_io_demo src/mecanum_io_demo.cpp)
 target_include_directories(mecanum_io_demo PUBLIC
@@ -39,7 +41,18 @@ target_include_directories(mecanum_io_demo
     $<INSTALL_INTERFACE:include> # 通常指定
 )
 
-install(TARGETS mecanum_io_demo
+add_executable(mecanum_node src/mecanum_node.cpp)
+target_include_directories(mecanum_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(mecanum_node rclcpp geometry_msgs)
+target_include_directories(mecanum_node
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> # 通常の指定
+    $<BUILD_INTERFACE:${EIGEN3_INCLUDE_DIR}> # Eigen3用の指定
+    $<INSTALL_INTERFACE:include> # 通常指定
+)
+install(TARGETS mecanum_io_demo mecanum_node
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 

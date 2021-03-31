@@ -23,24 +23,38 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 *******************************************************************************/
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <termios.h>
+#include "rclcpp/rclcpp.hpp"
+#include <geometry_msgs/msg/twist.hpp>
 #include <Eigen/Geometry>
 #include "mecanum_io/mecanum_serial.hpp"
 
-int main()
+class MecanumNode : public rclcpp::Node
 {
-  MecanumSerial mecanum("/dev/ttyACM0", 115200);
-  
-  Eigen::Vector2f v1(0, 0);
-  mecanum.setVelocity( v1, 100 );
-  usleep(1000000);
-  Eigen::Vector2f v2(0, 0);
-  mecanum.setVelocity( v2 );
+  public:
+  MecanumNode()
+  : Node("mecanum")
+  {
+    subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
+    "topic", 10, std::bind(&MecanumNode::topic_callback, this, std::placeholders::_1));
 
-  mecanum.close();
+    mecanum_ = MecanumSerial("/dev/ttyACM0", 115200);
+  }
+
+  private:
+  void topic_callback(const geometry_msgs::msg::Twist::SharedPtr cmd_vel)
+  {
+    RCLCPP_INFO(this->get_logger(), "I heard");
+    mecanum_.setVelocity( cmd_vel->linear.x, cmd_vel->linear.y, cmd_vel->angular.z );
+  }
+  
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscription_;
+  MecanumSerial mecanum_;
+};
+
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<MecanumNode>());
+  rclcpp::shutdown();
   return 0;
 }
