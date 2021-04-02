@@ -35,8 +35,7 @@ class MecanumNode : public rclcpp::Node
   : Node("mecanum")
   {
     subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "topic", 10, std::bind(&MecanumNode::topic_callback, this, std::placeholders::_1));
-
+    "cmd_vel", 10, std::bind(&MecanumNode::topic_callback, this, std::placeholders::_1));
     mecanum_ = MecanumSerial("/dev/ttyACM0", 115200);
   }
 

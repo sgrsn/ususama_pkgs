@@ -76,6 +76,56 @@ class IntSerial
     serial_.writePort(data_bytes, index+1);
   }
 
+  void getCommand()
+  {
+    uint8_t data_bytes[12] = {};
+    uint8_t bytes[4] = {0,0,0,0};
+    int8_t checksum = 0;
+    serial_.readPort(data_bytes, 1);
+    if (data_bytes[0] != HEAD_BYTE)
+    {
+      return;
+    }
+    serial_.readPort(data_bytes, 1);
+    uint8_t reg = data_bytes[0];
+    for (int i = 0; i < 4; ++i)
+    {
+      serial_.readPort(data_bytes, 1);
+      uint8_t d = data_bytes[0];
+      if (d == ESCAPE_BYTE)
+      {
+        serial_.readPort(data_bytes, 1);
+        uint8_t nextByte = data_bytes[0];
+        bytes[i] = nextByte ^ ESCAPE_MASK;
+        checksum += (d + nextByte);
+      }
+      else
+      {
+          bytes[i] = d;
+          checksum += d;
+      }
+    }
+    serial_.readPort(data_bytes, 1);
+    int8_t checksum_recv = data_bytes[0];
+    int32_t DATA = 0x00;
+    for(int i = 0; i < 4; i++)
+    {
+        DATA |= (((int32_t)bytes[i]) << (24 - (i*8)));
+    }
+
+    printf("get data %d\r\n", DATA);
+
+    if (checksum == checksum_recv)
+    {
+        //*(_registar + reg) =  DATA;
+    }
+    else
+    {
+        // data error
+    }
+    
+  }
+
   void forceCommand(uint8_t reg, uint8_t *command, uint8_t length)
   {
     uint8_t send_bytes[length+2] = {};

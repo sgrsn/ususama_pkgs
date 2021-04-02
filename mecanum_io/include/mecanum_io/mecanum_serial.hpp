@@ -66,6 +66,11 @@ class MecanumSerial
     usleep(COMMAND_SLEEP_MICROSEC);
   }
 
+  void getVelocity()
+  {
+    serial_.getCommand();
+  }
+
   void stopMotors()
   {
     Eigen::Vector2f vel(0, 0);
