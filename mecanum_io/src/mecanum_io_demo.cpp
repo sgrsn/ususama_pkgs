@@ -41,7 +41,11 @@ int main()
   mecanum.stopMotors();
   usleep(100000);
 
-  mecanum.getVelocity();
+  for(int i= 0; i < 5000; i++)
+  {
+    mecanum.getVelocity();
+    usleep(100);
+  }
 
 /*
   Eigen::Vector2f vel2(0, 100);

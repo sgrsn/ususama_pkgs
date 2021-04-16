@@ -36,12 +36,13 @@ class MecanumSerial
 {
   private:
   IntSerial serial_;
+  int register_[128];
 
   public:
   MecanumSerial(){}
   MecanumSerial(const char * device, uint32_t baud_rate)
   {
-    serial_ = IntSerial(device, baud_rate);
+    serial_ = IntSerial(device, baud_rate, register_);
   }
 
   // velocity shoud be set unit of mm/sec
@@ -68,7 +69,10 @@ class MecanumSerial
 
   void getVelocity()
   {
-    serial_.getCommand();
+    serial_.getIntData();
+    printf("vel0 : %d\r\n", register_[0x10]);
+    printf("vel1 : %d\r\n", register_[0x11]);
+    printf("vel2 : %d\r\n", register_[0x12]);
   }
 
   void stopMotors()

@@ -30,6 +30,7 @@ either expressed or implied, of the FreeBSD Project.
 #include "mecanum_io/serial_io.hpp"
 
 #define HEAD_BYTE   0x7E
+#define READ_COMMAND   0xFF
 #define ESCAPE_BYTE 0x7D
 #define ESCAPE_MASK 0x20
 
@@ -37,11 +38,13 @@ class IntSerial
 {
   private:
   SerialIO serial_;
+  int *register_;
 
   public:
   IntSerial(){}
-  IntSerial(const char * device, uint32_t baud_rate)
+  IntSerial(const char * device, uint32_t baud_rate, int *register_p)
   {
+    register_ = register_p;
     serial_ = SerialIO(device, baud_rate);
     if(!serial_.hasFileDescriptor())
     {
@@ -76,7 +79,7 @@ class IntSerial
     serial_.writePort(data_bytes, index+1);
   }
 
-  void getCommand()
+  void getIntData()
   {
     uint8_t data_bytes[12] = {};
     uint8_t bytes[4] = {0,0,0,0};
@@ -113,11 +116,11 @@ class IntSerial
         DATA |= (((int32_t)bytes[i]) << (24 - (i*8)));
     }
 
-    printf("get data %d\r\n", DATA);
+    //printf("get data %d\r\n", DATA);
 
     if (checksum == checksum_recv)
     {
-        //*(_registar + reg) =  DATA;
+        register_[reg] =  DATA;
     }
     else
     {
