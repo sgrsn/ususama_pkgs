@@ -28,39 +28,42 @@ either expressed or implied, of the FreeBSD Project.
 #include <unistd.h>
 #include <stdint.h>
 #include <termios.h>
+#include <cassert>
+#include <thread>
 #include <Eigen/Geometry>
 #include "mecanum_io/mecanum_serial.hpp"
 
 int main()
 {
-  MecanumSerial mecanum("/dev/ttyACM0", 115200);
+  MecanumSerial mecanum("/dev/ttyACM1", 115200);
   
   Eigen::Vector2f vel(100, 0);
-  mecanum.setVelocity( vel, (float)0 );
   usleep(1000000);
   mecanum.stopMotors();
   usleep(100000);
 
-  for(int i= 0; i < 5000; i++)
+  bool stop_flg = false;
+  std::thread t([&]
+  { 
+    while(true)
+    {
+      mecanum.update();
+      printf("%f, %f, %f\r\n", mecanum.PositionX(), mecanum.PositionY(),mecanum.PositionTheta());
+      if (stop_flg)
+      break;
+    }
+  });
+
+  for(int i= 0; i < 10; i++)
   {
-    mecanum.getVelocity();
-    usleep(100);
+    mecanum.setVelocity( 50, 0, (float)0 );
+    usleep(200000);
   }
-
-/*
-  Eigen::Vector2f vel2(0, 100);
-  mecanum.setVelocity( vel2, (float)0 );
-  usleep(1000000);
+  
+  stop_flg = true;
+  t.detach();
   mecanum.stopMotors();
   usleep(100000);
-
-  Eigen::Vector2f vel3(0, 0);
-  mecanum.setVelocity( vel3, (float)500 );
-  usleep(1000000);
-  mecanum.stopMotors();
-  usleep(100000);
-*/
-
   mecanum.close();
   return 0;
 }

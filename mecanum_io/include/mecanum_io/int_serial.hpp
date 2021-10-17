@@ -27,12 +27,13 @@ either expressed or implied, of the FreeBSD Project.
 #include <unistd.h>
 #include <stdint.h>
 #include <termios.h>
+#include <list>
 #include "mecanum_io/serial_io.hpp"
 
-#define HEAD_BYTE   0x7E
+#define HEAD_BYTE   0x1D
 #define READ_COMMAND   0xFF
-#define ESCAPE_BYTE 0x7D
-#define ESCAPE_MASK 0x20
+#define ESCAPE_BYTE 0x1E
+#define ESCAPE_MASK 0x1F
 
 class IntSerial
 {
@@ -54,51 +55,67 @@ class IntSerial
 
   void writeCommand(uint8_t reg, int data)
   {
-    uint8_t data_bytes[12] = {};
-    uint8_t index = 0;
+    std::list<uint8_t> packet_list;
+    packet_list.push_back(HEAD_BYTE);
     uint8_t checksum = 0;
-    data_bytes[index++] = HEAD_BYTE;
-    data_bytes[index++] = reg;
-    for (uint8_t i = 0; i < 4; ++i)
+    packet_list.push_back(reg);
+    checksum += reg;
+
+    uint8_t bytes[] = {
+      (uint8_t)(data>>24 & 0xFF), 
+      (uint8_t)(data>>16 & 0xFF), 
+      (uint8_t)(data>>8 & 0xFF), 
+      (uint8_t)(data>>0 & 0xFF), 
+    };
+
+    for(int i = 0; i < 4; i++)
     {
-        uint8_t tmp = data >> (24 - i*8) & 0xFF;
-        if ( (tmp == ESCAPE_BYTE) || (tmp == HEAD_BYTE) )
-        {
-          data_bytes[index++] = ESCAPE_BYTE;
-          checksum += ESCAPE_BYTE;
-          data_bytes[index++] = tmp ^ ESCAPE_MASK;
-          checksum += tmp ^ ESCAPE_MASK;
-        }
-        else
-        {
-          data_bytes[index++] = tmp;
-          checksum += tmp;
-        }
+      if( (bytes[i] == ESCAPE_BYTE) || (bytes[i] == HEAD_BYTE) )
+      {
+        packet_list.push_back(ESCAPE_BYTE);
+        checksum += ESCAPE_BYTE;
+        uint8_t escape = (uint8_t)( (int)bytes[i] ^ (int)ESCAPE_MASK );
+        packet_list.push_back(escape);
+        checksum += escape;
+      }
+      else
+      {
+        packet_list.push_back(bytes[i]);
+        checksum += bytes[i];
+      }
     }
-    data_bytes[index] = checksum;
-    serial_.writePort(data_bytes, index+1);
+    packet_list.push_back(checksum);
+    int size = packet_list.size() - 1;
+    packet_list.insert(std::next(packet_list.begin(), 1), (uint8_t)size);
+    uint8_t packet_array[packet_list.size()] = {};
+    std::copy(packet_list.begin(), packet_list.end(), packet_array);
+    serial_.writePort(packet_array, packet_list.size());
   }
 
   void getIntData()
   {
     uint8_t data_bytes[12] = {};
-    uint8_t bytes[4] = {0,0,0,0};
-    int8_t checksum = 0;
     serial_.readPort(data_bytes, 1);
     if (data_bytes[0] != HEAD_BYTE)
     {
       return;
     }
     serial_.readPort(data_bytes, 1);
+    int size = data_bytes[0];
+    if(size > 12) return;
+    serial_.readPort(data_bytes, size);
+    int index = 0;
     uint8_t reg = data_bytes[0];
+    index++;
+    int8_t checksum = 0;
+    checksum += reg;
+    uint8_t bytes[4] = {0,0,0,0};
     for (int i = 0; i < 4; ++i)
     {
-      serial_.readPort(data_bytes, 1);
-      uint8_t d = data_bytes[0];
+      uint8_t d = data_bytes[index++];
       if (d == ESCAPE_BYTE)
       {
-        serial_.readPort(data_bytes, 1);
-        uint8_t nextByte = data_bytes[0];
+        uint8_t nextByte = data_bytes[index++];
         bytes[i] = nextByte ^ ESCAPE_MASK;
         checksum += (d + nextByte);
       }
@@ -108,8 +125,7 @@ class IntSerial
           checksum += d;
       }
     }
-    serial_.readPort(data_bytes, 1);
-    int8_t checksum_recv = data_bytes[0];
+    int8_t checksum_recv = data_bytes[index++];
     int32_t DATA = 0x00;
     for(int i = 0; i < 4; i++)
     {

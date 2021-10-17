@@ -1,0 +1,9 @@
+<library path="ususama_hardware">
+  <class name="ususama_hardware/UsusamaHardware"
+         type="ususama_hardware::UsusamaHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The Ususama mecanum wheel system interface.
+    </description>
+  </class>
+</library>

@@ -23,12 +23,26 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 *******************************************************************************/
 
+#include <iostream>
+#include <memory>
 #include <Eigen/Geometry>
 #include "mecanum_io/int_serial.hpp"
 
-#define VEL_X 0x00
-#define VEL_Y 0x01
-#define ANGULAR_VEL 0x02
+
+#define COMMAND_POSE_X 0x01
+#define COMMAND_POSE_Y 0x02
+#define COMMAND_POSE_THETA 0x03
+#define COMMAND_VELOCITY_X 0x04
+#define COMMAND_VELOCITY_Y 0x05
+#define COMMAND_VELOCITY_THETA 0x06
+
+#define CURRENT_POSE_X 0x01
+#define CURRENT_POSE_Y 0x02
+#define CURRENT_POSE_THETA 0x03
+#define CURRENT_VELOCITY_X 0x04
+#define CURRENT_VELOCITY_Y 0x05
+#define CURRENT_VELOCITY_THETA 0x06
+
 
 #define COMMAND_SLEEP_MICROSEC 1000
 
@@ -36,7 +50,8 @@ class MecanumSerial
 {
   private:
   IntSerial serial_;
-  int register_[128];
+  //std::unique_ptr<IntSerial> serial_;
+  int register_[128] = {};
 
   public:
   MecanumSerial(){}
@@ -49,30 +64,55 @@ class MecanumSerial
   // angular_vel 10E-3rad/sec
   void setVelocity(Eigen::Vector2f velocity, float angular_vel=0)
   {
-    serial_.writeCommand( VEL_X, (int)velocity.x() );
+    serial_.writeCommand( COMMAND_VELOCITY_X, (int)velocity.x() );
     usleep(COMMAND_SLEEP_MICROSEC);
-    serial_.writeCommand( VEL_Y, (int)velocity.y() );
+    serial_.writeCommand( COMMAND_VELOCITY_Y, (int)velocity.y() );
     usleep(COMMAND_SLEEP_MICROSEC);
-    serial_.writeCommand( ANGULAR_VEL, (int)angular_vel );
+    serial_.writeCommand( COMMAND_VELOCITY_THETA, (int)angular_vel );
     usleep(COMMAND_SLEEP_MICROSEC);
   }
 
   void setVelocity(float vel_x, float vel_y, float angular_vel=0)
   {
-    serial_.writeCommand( VEL_X, (int)vel_x );
+    serial_.writeCommand( COMMAND_VELOCITY_X, (int)vel_x );
     usleep(COMMAND_SLEEP_MICROSEC);
-    serial_.writeCommand( VEL_Y, (int)vel_y );
+    serial_.writeCommand( COMMAND_VELOCITY_Y, (int)vel_y );
     usleep(COMMAND_SLEEP_MICROSEC);
-    serial_.writeCommand( ANGULAR_VEL, (int)angular_vel );
+    serial_.writeCommand( COMMAND_VELOCITY_THETA, (int)angular_vel );
     usleep(COMMAND_SLEEP_MICROSEC);
   }
 
-  void getVelocity()
+  void update()
   {
     serial_.getIntData();
-    printf("vel0 : %d\r\n", register_[0x10]);
-    printf("vel1 : %d\r\n", register_[0x11]);
-    printf("vel2 : %d\r\n", register_[0x12]);
+    //printf("theta : %d\r\n", register_[CURRENT_POSE_THETA]);
+    //printf("vel1 : %d\r\n", register_[0x11]);
+    //printf("vel2 : %d\r\n", register_[0x12]);
+  }
+
+  double PositionX()
+  {
+    return (double)register_[CURRENT_POSE_X];
+  }
+  double PositionY()
+  {
+    return (double)register_[CURRENT_POSE_Y];
+  }
+  double PositionTheta()
+  {
+    return (double)register_[CURRENT_POSE_THETA];
+  }
+  double VelocityX()
+  {
+    return (double)register_[CURRENT_VELOCITY_X];
+  }
+  double VelocityY()
+  {
+    return (double)register_[CURRENT_VELOCITY_Y];
+  }
+  double VelocityTheta()
+  {
+    return (double)register_[CURRENT_VELOCITY_THETA];
   }
 
   void stopMotors()

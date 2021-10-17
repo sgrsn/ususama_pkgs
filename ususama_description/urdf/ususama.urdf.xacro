@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot name="ususama" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find ususama_description)/urdf/ususama.xacro" />
+  <xacro:include filename="$(find ususama_description)/urdf/ususama.ros2_control.xacro" />
+
+  <link name="world"/>
+
+  <xacro:ususama parent="world">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:ususama>
+
+  <xacro:ususama_ros2_control name="ususama_ros2_control" />
+</robot>
