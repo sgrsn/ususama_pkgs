@@ -129,7 +129,7 @@ class MecanumNode : public rclcpp_lifecycle::LifecycleNode
   CallbackReturn on_configure(const rclcpp_lifecycle::State &)
   {
     std::string port;
-    declare_parameter<std::string>("port", "/dev/ttyACM1");
+    declare_parameter<std::string>("port", "/dev/ttyACM2");
     get_parameter("port", port);
     std::cout << port << "\n";
     mecanum_ = std::make_unique<MecanumSerial>(port.c_str(), 115200); 

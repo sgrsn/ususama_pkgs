@@ -34,11 +34,23 @@ def generate_launch_description():
         executable='static_transform_publisher', output='screen',
         arguments=['0.165', '0', '0.1', '3.14', '3.14', '0.0', 'base_footprint', 'laser'],
     )
+    static_transform_publisher_node_A = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher', output='screen',
+        arguments=['0', '0', '0', '0.0', '0.0', '0.0', 'laser', 'laser_A'],
+    )
+    static_transform_publisher_node_B = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher', output='screen',
+        arguments=['0.105', '0.115', '0.1', '3.14', '3.14', '0.0', 'laser', 'laser_B'],
+    )
 
     ld = LaunchDescription()
     ld.add_action(slam_node)
     ld.add_action(rviz2_node)
     #ld.add_action(teleop_key_node)
     ld.add_action(static_transform_publisher_node)
+    #ld.add_action(static_transform_publisher_node_A)
+    #ld.add_action(static_transform_publisher_node_B)
 
     return ld

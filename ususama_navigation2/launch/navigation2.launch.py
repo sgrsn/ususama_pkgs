@@ -63,17 +63,17 @@ def generate_launch_description():
             arguments=['-d', rviz_config_dir],
             parameters=[{'use_sim_time': use_sim_time}],
             output='screen'),
-            
+
         Node(
             package='tf2_ros',
             executable='static_transform_publisher', output='screen',
-            arguments=['0', '0', '0', '0', '0', '0', 'map', 'base_link']),
+            arguments=['0', '0', '0', '0', '0', '0', 'base_footprint', 'base_link']),
         Node(
             package='tf2_ros',
             executable='static_transform_publisher', output='screen',
-            arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'odom']),
+            arguments=['0.165', '0', '0.1', '3.14', '3.14', '0.0', 'base_link', 'laser']),
         Node(
             package='tf2_ros',
             executable='static_transform_publisher', output='screen',
-            arguments=['0', '0', '0.0', '0', '0.0', '0.0', 'base_footprint', 'base_laser']),
+            arguments=['0', '0', '0', '0', '0', '0', 'laser', 'base_laser']),
     ])

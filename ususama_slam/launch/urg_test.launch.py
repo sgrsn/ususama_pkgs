@@ -11,6 +11,7 @@ def generate_launch_description():
     param_file = os.path.join(
             get_package_share_directory('ususama_slam'), 'config',
             'urg.yaml')
+    print("param is ")
     print(param_file)
     hokuyo_node = Node(
         package='urg_node', executable='urg_node_driver', output='screen',

@@ -17,14 +17,22 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
+# add_executable(point_fusion src/point_fusion.cpp)
+# ament_target_dependencies(point_fusion rclcpp sensor_msgs)
+# target_include_directories(point_fusion PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
 
 install(
   DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
+# install(TARGETS point_fusion
+#   EXPORT export_${PROJECT_NAME}
+#   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

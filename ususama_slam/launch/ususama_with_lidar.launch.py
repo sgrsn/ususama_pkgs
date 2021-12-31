@@ -12,12 +12,20 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-  urg_param_file = os.path.join(
+  param_file_A = os.path.join(
     get_package_share_directory('ususama_slam'), 'config',
-    'urg.yaml')
-  hokuyo_node = Node(
+    'urg_A.yaml')
+  hokuyo_node_A = Node(
     package='urg_node', executable='urg_node_driver', output='screen',
-    parameters=[urg_param_file]
+    parameters=[param_file_A]
+    )
+      
+  param_file_B = os.path.join(
+    get_package_share_directory('ususama_slam'), 'config',
+    'urg_B.yaml')
+  hokuyo_node_B = Node(
+    package='urg_node', executable='urg_node_driver', output='screen',
+    parameters=[param_file_B]
     )
 
   mecanum_param_file = os.path.join(get_package_share_directory(
@@ -29,7 +37,8 @@ def generate_launch_description():
     )
 
   ld = LaunchDescription()
-  ld.add_action(hokuyo_node)
+  ld.add_action(hokuyo_node_A)
+  ld.add_action(hokuyo_node_B)
   ld.add_action(mecanum_node)
 
   #ld.add_action(mouse_node)
